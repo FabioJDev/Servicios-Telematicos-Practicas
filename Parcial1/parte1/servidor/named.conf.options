@@ -1,0 +1,54 @@
+logging {
+    channel queries_log {
+        file "/var/log/named/queries.log" versions 3 size 5m;
+        severity info;
+        print-time yes;
+        print-category yes;
+    };
+    channel transfers_log {
+        file "/var/log/named/transfers.log" versions 3 size 5m;
+        severity info;
+        print-time yes;
+        print-category yes;
+    };
+    channel security_log {
+        file "/var/log/named/security.log" versions 3 size 5m;
+        severity info;
+        print-time yes;
+        print-category yes;
+    };
+    category queries  { queries_log; };
+    category xfer-in  { transfers_log; };
+    category xfer-out { transfers_log; };
+    category security { security_log; };
+};
+
+acl "trusted" {
+    192.168.50.0/24;
+    127.0.0.1;
+};
+
+key "esclavo-key" {
+    algorithm hmac-sha256;
+    secret "ba9KxzPLWL9SRvT58sU4kaVsl1sOEuVlKSDQLyGU7xo=";
+};
+
+options {
+    directory "/var/cache/bind";
+
+    querylog yes;
+    recursion no;              // autoritativo puro, no open resolver
+    ixfr-from-differences yes;
+    allow-query { trusted; };
+    allow-recursion { none; };
+    allow-transfer { none; };  // por defecto nadie; se abre por zona abajo
+
+    dnssec-validation auto;
+
+    rate-limit {
+        responses-per-second 5;
+        window 5;
+    };
+
+    listen-on-v6 { any; };
+};
